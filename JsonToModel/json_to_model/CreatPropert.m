@@ -422,6 +422,9 @@ static NSMutableString *staticText_m;
         if(category!=2){
             [staticText_h appendFormat:@"#pragma mark -%@Model\n",fileName];
             [staticText_h appendString:@"@interface "];
+            if (category == 4){
+                [staticText_h appendFormat:@"%@Model",[self conversionName:fileName]];
+            }else
             [staticText_h appendFormat:@"%@Model",fileName];
             if(ecoding==YES && (category!=3 && category!=4)) [staticText_h appendString:@" : NSObject <NSCoding>\n\n"];
             else [staticText_h appendString:@" : NSObject\n\n"];
@@ -431,6 +434,9 @@ static NSMutableString *staticText_m;
             
             [staticText_m appendFormat:@"#pragma mark -%@Model\n",fileName];
             [staticText_m appendString:@"@implementation "];
+            if (category == 4){
+                [staticText_m appendFormat:@"%@Model\n\n",[self conversionName:fileName]];
+            }else
             [staticText_m appendFormat:@"%@Model\n\n",fileName];
             //在这里还可以添加其他信息
             if(category==1){
@@ -530,7 +536,19 @@ static NSMutableString *staticText_m;
         StrM = [self joinTogetherToMutableString:StrM nameArray:stringArr];
     }
     if (NSArrayOrDictionaryArr.count) {
-        StrM = [self joinTogetherToMutableString:StrM nameArray:NSArrayOrDictionaryArr];
+        
+        NSMutableArray *arrOrDic = [NSMutableArray new];
+        for (NSString *name in NSArrayOrDictionaryArr) {
+            if ([name hasPrefix:@"NSDictionary"]) {
+                [arrOrDic addObject:[name substringFromIndex:12]];
+            }else if ([name hasPrefix:@"NSArray"]){
+                [arrOrDic addObject:[name substringFromIndex:7]];
+            }else{
+                [arrOrDic addObject:name];
+            }
+        }
+        
+        StrM = [self joinTogetherToMutableString:StrM nameArray:arrOrDic];
     }
     if (yyArr.count) {
         StrM = [self joinTogetherToMutableString:StrM nameArray:yyArr];
@@ -572,7 +590,7 @@ static NSMutableString *staticText_m;
         [StrM appendString:@"+ (NSDictionary *)modelContainerPropertyGenericClass {\n"];
         [StrM appendString:@"return @{"];
         for (NSString *tempStr in arr) {
-            [StrM appendFormat:@"@\"%@\" : [%@%@Model class],\n", tempStr, modelName, tempStr];
+            [StrM appendFormat:@"@\"%@\" : [%@%@Model class],\n", [self conversionName:tempStr], modelName, tempStr];
         }
         [StrM appendString:@"};\n"];
         [StrM appendString:@"}\n\n"];
