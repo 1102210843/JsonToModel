@@ -10,6 +10,9 @@
 
 @interface ViewController : NSViewController
 
+
+@property (weak) IBOutlet NSScrollView *sourceTextView;
+
 /**
  *  modelmingcehng
  */

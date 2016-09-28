@@ -140,52 +140,31 @@
         modelObjct.isSelect = isSelect;
         
         if (isSelect) {
-            
-            __block JSONSourceCellModel *blockModelObjct = modelObjct;
-            
-            __block NSString *message = @"文件已经生成在桌面,名字为\"代码助手.m\"";
-            
-            
             JSONSourceCellModel *model=modelObjct;
             
-            NSString *macDesktopPath=[ZHFileManager getMacDesktop];
-            macDesktopPath = [macDesktopPath stringByAppendingPathComponent:@"代码助手.m"];
-            if ([ZHFileManager fileExistsAtPath:macDesktopPath]==NO) {
-                [ZHFileManager createFileAtPath:macDesktopPath];
-            }
+            __block NSTextView *textView = _sourceTextView.documentView;
             
+            __block NSString *message = @"请添加源数据";
             if([model.title isEqualToString:@"url"]){
-                message = [message stringByAppendingString:@"，请把 网络url 填写在文件中"];
+                message = @"请把 网络url 填写在输入框中";
             }else if([model.title isEqualToString:@"json字符串"]){
-                message = [message stringByAppendingString:@"，请把 json字符串 填写在文件中"];
+                message = @"请把 json字符串 填写在输入框中";
             }else if([model.title isEqualToString:@"plist文件"]){
-                message = [message stringByAppendingString:@"，请把 plist文件路径 填写在文件中"];
+                message = @"请把 plist文件路径 填写在输入框中";
             }
             
-            NSAlert *alert = [[NSAlert alloc]init];
-            alert.messageText = message;
-            [alert addButtonWithTitle:@"导入数据"];
-            [alert addButtonWithTitle:@"取消"];
-            [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
-                
-                if (returnCode == 1000){
-                    
-                    NSString *macDesktopPath=[ZHFileManager getMacDesktop];
-                    macDesktopPath = [macDesktopPath stringByAppendingPathComponent:@"代码助手.m"];
-                    NSString *text=[NSString stringWithContentsOfFile:macDesktopPath encoding:NSUTF8StringEncoding error:nil];
-                    
-                    if (text.length>0) {
-                        [self checkData:text withType:message];
-                    }else{
-                        blockModelObjct.isSelect = NO;
-                        [self showAlertWithText:@"没有 填写数据 或者 导入数据!"];
-                    }
-                    
-                    [tableView reloadData];
-                }
-            }];
+            if (textView.string.length == 0) {
+                NSAlert *alert = [[NSAlert alloc]init];
+                alert.messageText = message;
+                [alert addButtonWithTitle:@"确定"];
+                [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
+                }];
+            }else {
+                NSString *text = [textView.string stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+                [self checkData:text withType:message];
+            }
+            
         }
-        
     }
 }
 

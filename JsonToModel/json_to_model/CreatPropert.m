@@ -154,6 +154,8 @@ static NSMutableString *staticText_m;
     if([fileName isEqualToString:modelName]==NO){
         if(category==1)
             fileName=[modelName stringByAppendingString:fileName];
+        else if (category == 4)
+            fileName=[modelName stringByAppendingString:[self preliminaryConversionName:fileName]];
         else{
             fileName=[modelName stringByAppendingString:fileName];
         }
@@ -168,11 +170,16 @@ static NSMutableString *staticText_m;
                 
                 NSString *myString = [self specialNSString:objtemp];
                 if (category == 4) {
-                    myString = [self conversionName:myString];
+                    myString = [self conversionName:objtemp];
+                    [self myNSString:myString ToNSMutableString:str];
+//                    [CreatCoreData addStringCoreDataToNSMutableString:coreStr withName:[self specialNSString:objtemp]];
+                    [stringArr addObject:objtemp];
+                }else{
+                    [self myNSString:myString ToNSMutableString:str];
+                    [CreatCoreData addStringCoreDataToNSMutableString:coreStr withName:[self specialNSString:objtemp]];
+                    [stringArr addObject:[self specialNSString:objtemp]];
                 }
-                [self myNSString:myString ToNSMutableString:str];
-                [CreatCoreData addStringCoreDataToNSMutableString:coreStr withName:[self specialNSString:objtemp]];
-                [stringArr addObject:[self specialNSString:objtemp]];
+                
             }
             else if([obj[objtemp] isKindOfClass:[NSArray class]]){//如果字典里面是数组
                 if(category==3){//原样输出
@@ -301,10 +308,12 @@ static NSMutableString *staticText_m;
                             break;
                     }
                 }else{
-                    NSString *myString = [self specialNSString:objtemp];
+                    NSString *myString = objtemp;
                     if (category == 4) {
                         myString = [self conversionName:myString];
-                    }
+                    }else
+                        myString = [self specialNSString:objtemp];
+                    
                     [self myNSString:myString ToNSMutableString:str];
                     [CreatCoreData addStringCoreDataToNSMutableString:coreStr withName:[self specialNSString:objtemp]];
                     [stringArr addObject:[self specialNSString:objtemp]];
@@ -422,9 +431,6 @@ static NSMutableString *staticText_m;
         if(category!=2){
             [staticText_h appendFormat:@"#pragma mark -%@Model\n",fileName];
             [staticText_h appendString:@"@interface "];
-            if (category == 4){
-                [staticText_h appendFormat:@"%@Model",[self conversionName:fileName]];
-            }else
             [staticText_h appendFormat:@"%@Model",fileName];
             if(ecoding==YES && (category!=3 && category!=4)) [staticText_h appendString:@" : NSObject <NSCoding>\n\n"];
             else [staticText_h appendString:@" : NSObject\n\n"];
@@ -434,9 +440,6 @@ static NSMutableString *staticText_m;
             
             [staticText_m appendFormat:@"#pragma mark -%@Model\n",fileName];
             [staticText_m appendString:@"@implementation "];
-            if (category == 4){
-                [staticText_m appendFormat:@"%@Model\n\n",[self conversionName:fileName]];
-            }else
             [staticText_m appendFormat:@"%@Model\n\n",fileName];
             //在这里还可以添加其他信息
             if(category==1){
@@ -569,18 +572,28 @@ static NSMutableString *staticText_m;
     }
     return StrM;
 }
-
-+ (NSString *)conversionName:(NSString *)name
++ (NSString *)preliminaryConversionName:(NSString *)name
 {
     NSRange range = [name rangeOfString:@"_"];
     NSString *tempStr = name;
     if (range.location != NSNotFound) {
         NSArray *array = [name componentsSeparatedByString:@"_"];
-        tempStr = @"k";
+        tempStr = @"";
         for (NSString *str in array) {
             tempStr = [tempStr stringByAppendingString:[str capitalizedString]];
         }
     }
+    return tempStr;
+}
+
++ (NSString *)conversionName:(NSString *)name
+{//[string isEqualToString:@"id"]||[string isEqualToString:@"description"]
+    
+    NSString *tempStr = @"";
+    if ([name rangeOfString:@"_"].location != NSNotFound || [name isEqualToString:@"id"] || [name isEqualToString:@"description"]) {
+        tempStr = [@"k" stringByAppendingString:[self preliminaryConversionName:name]];
+    }else
+        tempStr = name;
     return tempStr;
 }
 
@@ -590,7 +603,7 @@ static NSMutableString *staticText_m;
         [StrM appendString:@"+ (NSDictionary *)modelContainerPropertyGenericClass {\n"];
         [StrM appendString:@"return @{"];
         for (NSString *tempStr in arr) {
-            [StrM appendFormat:@"@\"%@\" : [%@%@Model class],\n", [self conversionName:tempStr], modelName, tempStr];
+            [StrM appendFormat:@"@\"%@\" : [%@%@Model class],\n", [self conversionName:tempStr], modelName, [[self preliminaryConversionName:tempStr] capitalizedString]];
         }
         [StrM appendString:@"};\n"];
         [StrM appendString:@"}\n\n"];
